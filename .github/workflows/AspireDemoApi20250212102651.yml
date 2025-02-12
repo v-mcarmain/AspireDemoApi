@@ -13,14 +13,13 @@ env:
   AZURE_APIM_SERVICENAME: AspireDemoApiapi
   AZURE_APIM_API_ID: AspireDemoApi
   AZURE_APIM_APPSERVICEURL: https://aspiredemoapi20250212102651.azurewebsites.net
-  SWASHBUCKLE_ASPNET_CORE_CLI_PACKAGE_VERSION: 5.6.3
-  SWASHBUCKLE_DOTNET_CORE_VERSION: 3.1.x
+  SWASHBUCLE_ASPNET_CORE_CLI_PACKAGE_VERSION: 6.7.0  # ✅ Updated for .NET 8.0
   API_IMPORT_SPECIFICATION_PATH: ./publish/swagger.json
   API_IMPORT_DLL: ./bin/Release/net8.0/AspireDemoApi.dll
   API_IMPORT_VERSION: v1
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 8.0.x
-  WORKING_DIRECTORY: .  # ✅ FIXED: Set to root since csproj is in root
+  WORKING_DIRECTORY: AspireDemoApi.csproj  # ✅ Ensure this is correct since it's in the root
 
 jobs:
   build:
@@ -36,23 +35,19 @@ jobs:
           dotnet-version: ${{ env.DOTNET_CORE_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore
-        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: dotnet restore ${{ env.WORKING_DIRECTORY }}
 
       - name: Build project
-        run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
-        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: dotnet build ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-restore
 
       - name: Run tests
-        run: dotnet test --no-build
-        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: dotnet test ${{ env.WORKING_DIRECTORY }} --no-build
 
       - name: Publish application
-        run: dotnet publish --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: dotnet publish ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 
       - name: Install Swashbuckle CLI .NET Global Tool
-        run: dotnet tool install --global Swashbuckle.AspNetCore.Cli --version ${{ env.SWASHBUCKLE_ASPNET_CORE_CLI_PACKAGE_VERSION }}
+        run: dotnet tool install --global Swashbuckle.AspNetCore.Cli --version ${{ env.SWASHBUCLE_ASPNET_CORE_CLI_PACKAGE_VERSION }}
 
       - name: Ensure .NET Tools are in PATH
         run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
@@ -65,8 +60,8 @@ jobs:
           swagger tofile \
             --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" \
             "${{ env.API_IMPORT_DLL }}" \
-            ${{ env.API_IMPORT_VERSION }}
-        working-directory: ${{ env.WORKING_DIRECTORY }}
+            ${{ env.API_IMPORT_VERSION }} \
+            --no-startup  # ✅ Fix for Minimal API
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v4
@@ -88,7 +83,7 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ secrets.AspireDemoApiapi_SPN }}
 
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v2
