@@ -13,7 +13,6 @@ env:
   AZURE_APIM_SERVICENAME: AspireDemoApiapi
   AZURE_APIM_API_ID: AspireDemoApi
   AZURE_APIM_APPSERVICEURL: https://aspiredemoapi20250212102651.azurewebsites.net
-  SWASHBUCKLE_VERSION: 6.7.0
   API_IMPORT_SPECIFICATION_PATH: ./publish/swagger.json
   API_IMPORT_DLL: ./publish/AspireDemoApi.dll
   API_IMPORT_VERSION: v1
@@ -47,34 +46,21 @@ jobs:
         run: dotnet publish ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 
       - name: Install Swashbuckle CLI .NET Global Tool
-        run: |
-          echo "Installing Swashbuckle CLI..."
-          dotnet tool install --global Swashbuckle.AspNetCore.Cli --version ${{ env.SWASHBUCKLE_VERSION }}
-          echo "✅ Swashbuckle Installed"
+        run: dotnet tool install --global Swashbuckle.AspNetCore.Cli --version 6.7.0
 
-      - name: Ensure .NET Tools Path is Available
+      - name: Ensure .NET Tools are in PATH
         run: |
-          echo "Ensuring .NET Global Tools Path is set..."
           echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
-          export PATH="$HOME/.dotnet/tools:$PATH"
-          echo "✅ PATH Updated: $PATH"
+          echo "PATH after adding .NET tools:"
+          echo $PATH
 
       - name: Verify Swashbuckle CLI Installation
-        run: |
-          echo "Verifying Swashbuckle CLI..."
-          dotnet tool list --global
-          dotnet swagger --help || (echo "❌ Swashbuckle CLI is NOT available!" && exit 1)
-          echo "✅ Swashbuckle CLI is working."
+        run: dotnet tool list --global
 
-      - name: Generate Open API Specification Document (Minimal API)
+      - name: Generate Open API Specification Document
         run: |
-          if [ -f "${{ env.API_IMPORT_DLL }}" ]; then
-            echo "✅ Found DLL: ${{ env.API_IMPORT_DLL }}, generating Swagger..."
-            dotnet swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" ${{ env.API_IMPORT_VERSION }} --no-startup
-          else
-            echo "❌ ERROR: DLL not found at ${{ env.API_IMPORT_DLL }}"
-            exit 1
-          fi
+          export PATH="$HOME/.dotnet/tools:$PATH"
+          swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" ${{ env.API_IMPORT_VERSION }} --no-startup
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v4
