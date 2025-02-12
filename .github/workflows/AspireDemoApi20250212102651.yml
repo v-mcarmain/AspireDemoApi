@@ -20,7 +20,7 @@ env:
   API_IMPORT_VERSION: v1
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 8.0.x
-  WORKING_DIRECTORY: ./AspireDemoApi.csproj  # 🛠 Specify your project file
+  WORKING_DIRECTORY: AspireDemoApi/AspireDemoApi.csproj
 
 jobs:
   build:
@@ -66,7 +66,8 @@ jobs:
           swagger tofile \
             --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" \
             "${{ env.API_IMPORT_DLL }}" \
-            ${{ env.API_IMPORT_VERSION }}
+            ${{ env.API_IMPORT_VERSION }} \
+            --no-startup  # ✅ Fix for Minimal API
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v4
@@ -85,28 +86,4 @@ jobs:
           name: webapp
           path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AspireDemoApiapi_SPN }}
-
-      - name: Deploy to Azure WebApp
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-
-      - name: Import API into Azure API Management
-        run: |
-          az apim api import \
-            --path "${{ env.AZURE_APIM_RESOURCE_PATH }}" \
-            --resource-group "${{ env.AZURE_APIM_RESOURCEGROUP }}" \
-            --service-name "${{ env.AZURE_APIM_SERVICENAME }}" \
-            --api-id "${{ env.AZURE_APIM_API_ID }}" \
-            --service-url "${{ env.AZURE_APIM_APPSERVICEURL }}" \
-            --specification-path "${{ env.API_IMPORT_SPECIFICATION_PATH }}" \
-            --specification-format OpenApi \
-            --subscription-required false
-
-      - name: Logout from Azure
-        run: az logout
+      - 
