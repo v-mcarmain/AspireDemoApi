@@ -1,6 +1,6 @@
-using Microsoft.OpenApi.Exceptions;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AspireDemoApi.Types;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,38 +44,9 @@ app.MapGet("/weatherforecast", () =>
         .ToArray();
     return forecast;
 })
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+.WithName("GetWeatherForecast");
+//.WithOpenApi();
 
 app.Run();
-public class DateOnlyJsonConverter():JsonConverter<DateOnly>
-{
-     public override DateOnly Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        return DateOnly.Parse(reader.GetString()!);
-    }
-    public override void Write(Utf8JsonWriter writer, DateOnly value, JsonSerializerOptions options)
-    {
-        writer.WriteStringValue(value.ToString("yyyy-MM-dd"));
-    }
-}
-public class WeatherForecast 
-{
-    
-    public WeatherForecast(DateOnly date, int temparatureC, string? summary)
-    {
-       this.Date = date;
-        this.TemperatureC=temparatureC;
-        this.Summary = summary;
-    }
-    [JsonConverter(typeof(DateOnlyJsonConverter))]
-    public DateOnly Date { get; set; }
-    public int TemperatureC { get; set; }
-    public string? Summary { get; set; }
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
 
-//internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-//{
-//    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-//}
+
