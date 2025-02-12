@@ -8,13 +8,18 @@ on:
 env:
   AZURE_WEBAPP_NAME: AspireDemoApi20250212102651
   AZURE_WEBAPP_PACKAGE_PATH: ./publish
+  AZURE_APIM_RESOURCE_PATH: /
+  AZURE_APIM_RESOURCEGROUP: Default-ActivityLogAlerts
+  AZURE_APIM_SERVICENAME: AspireDemoApiapi
+  AZURE_APIM_API_ID: AspireDemoApi
+  AZURE_APIM_APPSERVICEURL: https://aspiredemoapi20250212102651.azurewebsites.net
+  SWASHBUCKLE_ASPNET_CORE_CLI_PACKAGE_VERSION: 5.6.3
   API_IMPORT_SPECIFICATION_PATH: ./publish/swagger.json
   API_IMPORT_DLL: ./publish/AspireDemoApi.dll
   API_IMPORT_VERSION: v1
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 8.0.x
   WORKING_DIRECTORY: AspireDemoApi.csproj
-  SWASHBUCKLE_CLI_VERSION: 6.7.0
 
 jobs:
   build:
@@ -24,10 +29,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET SDK (8.0)
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_CORE_VERSION }}
+
+      - name: Install Swashbuckle CLI .NET Global Tool
+        run: dotnet tool install --global Swashbuckle.AspNetCore.Cli --version ${{ env.SWASHBUCKLE_ASPNET_CORE_CLI_PACKAGE_VERSION }}
 
       - name: Restore dependencies
         run: dotnet restore ${{ env.WORKING_DIRECTORY }}
@@ -36,27 +44,24 @@ jobs:
         run: dotnet build ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-restore
 
       - name: Run tests
-        run: dotnet test --no-build --configuration ${{ env.CONFIGURATION }}
+        run: dotnet test ${{ env.WORKING_DIRECTORY }} --no-build
 
       - name: Publish application
         run: dotnet publish ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 
-      - name: Debug - List published files
-        run: ls -la ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+      - name: Ensure .NET Tools are in PATH
+        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
-      - name: Install Swashbuckle CLI
-        run: dotnet tool install --global Swashbuckle.AspNetCore.Cli --version ${{ env.SWASHBUCKLE_CLI_VERSION }}
+      - name: Set environment to Development
+        run: echo "ASPNETCORE_ENVIRONMENT=Development" >> $GITHUB_ENV
 
-      - name: Verify Swashbuckle Installation
-        run: dotnet tool list -g
-
-      - name: Generate OpenAPI Specification Document (Minimal API)
+      - name: Generate Open API Specification Document (Minimal API)
         run: |
           if [ -f "${{ env.API_IMPORT_DLL }}" ]; then
-            echo "✅ Found DLL: ${API_IMPORT_DLL}, generating Swagger..."
+            echo "✅ Found DLL: ${{ env.API_IMPORT_DLL }}, generating Swagger..."
             swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" ${{ env.API_IMPORT_VERSION }} --no-startup
           else
-            echo "❌ Error: DLL not found at ${API_IMPORT_DLL}"
+            echo "❌ Error: DLL not found at ${{ env.API_IMPORT_DLL }}"
             exit 1
           fi
 
@@ -91,11 +96,11 @@ jobs:
       - name: Import API into Azure API Management
         run: |
           az apim api import \
-            --path "/" \
-            --resource-group "Default-ActivityLogAlerts" \
-            --service-name "AspireDemoApiapi" \
-            --api-id "AspireDemoApi" \
-            --service-url "https://aspiredemoapi20250212102651.azurewebsites.net" \
+            --path "${{ env.AZURE_APIM_RESOURCE_PATH }}" \
+            --resource-group "${{ env.AZURE_APIM_RESOURCEGROUP }}" \
+            --service-name "${{ env.AZURE_APIM_SERVICENAME }}" \
+            --api-id "${{ env.AZURE_APIM_API_ID }}" \
+            --service-url "${{ env.AZURE_APIM_APPSERVICEURL }}" \
             --specification-path "${{ env.API_IMPORT_SPECIFICATION_PATH }}" \
             --specification-format OpenApi \
             --subscription-required false
