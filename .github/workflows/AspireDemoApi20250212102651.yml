@@ -13,13 +13,13 @@ env:
   AZURE_APIM_SERVICENAME: AspireDemoApiapi
   AZURE_APIM_API_ID: AspireDemoApi
   AZURE_APIM_APPSERVICEURL: https://aspiredemoapi20250212102651.azurewebsites.net
-  SWASHBUCLE_ASPNET_CORE_CLI_PACKAGE_VERSION: 6.7.0  # ✅ Updated for .NET 8.0
+  SWASHBUCLE_ASPNET_CORE_CLI_PACKAGE_VERSION: 6.7.0
   API_IMPORT_SPECIFICATION_PATH: ./publish/swagger.json
-  API_IMPORT_DLL: ./bin/Release/net8.0/AspireDemoApi.dll
+  API_IMPORT_DLL: ./publish/AspireDemoApi.dll  # ✅ Ensure this points to the published DLL
   API_IMPORT_VERSION: v1
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 8.0.x
-  WORKING_DIRECTORY: AspireDemoApi.csproj  # ✅ Ensure this is correct since it's in the root
+  WORKING_DIRECTORY: AspireDemoApi.csproj
 
 jobs:
   build:
@@ -57,11 +57,7 @@ jobs:
 
       - name: Generate Open API Specification Document
         run: |
-          swagger tofile \
-            --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" \
-            "${{ env.API_IMPORT_DLL }}" \
-            ${{ env.API_IMPORT_VERSION }} \
-            --no-startup  # ✅ Fix for Minimal API
+          swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" ${{ env.API_IMPORT_VERSION }} --no-startup
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v4
