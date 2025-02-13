@@ -66,7 +66,7 @@ jobs:
           fi
           
           # Verify Swagger CLI Exists
-          if ! command -v dotnet-swagger &> /dev/null; then
+          if ! command -v dotnet swagger &> /dev/null; then
             echo "❌ Swagger CLI tool not found! Installing..."
             dotnet tool install --global Swashbuckle.AspNetCore.Cli --version 6.7.0
             export PATH="$HOME/.dotnet/tools:$PATH"
