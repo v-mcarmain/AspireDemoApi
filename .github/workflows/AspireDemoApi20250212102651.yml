@@ -66,17 +66,17 @@ jobs:
           fi
           
           # Verify Swagger CLI Exists
-          if ! command -v dotnet-swagger &> /dev/null; then
+          if ! command -v swagger &> /dev/null; then
             echo "❌ Swagger CLI tool not found! Installing..."
             dotnet tool install --global Swashbuckle.AspNetCore.Cli --version 6.7.0
             export PATH="$HOME/.dotnet/tools:$PATH"
           fi
-
+          
           # Confirm tool is installed
           dotnet tool list --global
-
-          # Run Swagger Generation using full path
-          $HOME/.dotnet/tools/dotnet-swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" ${{ env.API_IMPORT_VERSION }} --no-startup || (echo "❌ Swagger generation failed" && exit 1)
+          
+          # Run Swagger Generation using correct command name
+          swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" ${{ env.API_IMPORT_VERSION }} --no-startup || (echo "❌ Swagger generation failed" && exit 1)
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v4
