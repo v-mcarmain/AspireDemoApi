@@ -13,7 +13,7 @@ env:
   AZURE_APIM_SERVICENAME: AspireDemoApiapi
   AZURE_APIM_API_ID: AspireDemoApi
   AZURE_APIM_APPSERVICEURL: https://aspiredemoapi20250212102651.azurewebsites.net
-  API_IMPORT_SPECIFICATION_PATH: ./publish/swagger.json
+  API_IMPORT_SPECIFICATION_PATH: ./publish/swagger.yaml
   API_IMPORT_DLL: ./publish/AspireDemoApi.dll
   API_IMPORT_VERSION: v1
   CONFIGURATION: Release
@@ -84,39 +84,39 @@ jobs:
           name: webapp
           path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 
-deploy:
-  runs-on: ubuntu-latest
-  needs: build
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
 
-  steps:
-    - name: Download artifact from build job
-      uses: actions/download-artifact@v4
-      with:
-        name: webapp
-        path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: webapp
+          path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 
-    - name: Azure Login (Fixing JSON Issue)
-      uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Azure Login (Fixing JSON Issue)
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Deploy to Azure WebApp
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+      - name: Deploy to Azure WebApp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 
-    - name: Import API into Azure API Management
-      run: |
-        az apim api import \
-          --path "${{ env.AZURE_APIM_RESOURCE_PATH }}" \
-          --resource-group "${{ env.AZURE_APIM_RESOURCEGROUP }}" \
-          --service-name "${{ env.AZURE_APIM_SERVICENAME }}" \
-          --api-id "${{ env.AZURE_APIM_API_ID }}" \
-          --service-url "${{ env.AZURE_APIM_APPSERVICEURL }}" \
-          --specification-path "${{ env.API_IMPORT_SPECIFICATION_PATH }}" \
-          --specification-format OpenApi \
-          --subscription-required false
+      - name: Import API into Azure API Management
+        run: |
+          az apim api import \
+            --path "${{ env.AZURE_APIM_RESOURCE_PATH }}" \
+            --resource-group "${{ env.AZURE_APIM_RESOURCEGROUP }}" \
+            --service-name "${{ env.AZURE_APIM_SERVICENAME }}" \
+            --api-id "${{ env.AZURE_APIM_API_ID }}" \
+            --service-url "${{ env.AZURE_APIM_APPSERVICEURL }}" \
+            --specification-path "${{ env.API_IMPORT_SPECIFICATION_PATH }}" \
+            --specification-format OpenApi \
+            --subscription-required false
 
-    - name: Logout from Azure
-      run: az logout
+      - name: Logout from Azure
+        run: az logout
