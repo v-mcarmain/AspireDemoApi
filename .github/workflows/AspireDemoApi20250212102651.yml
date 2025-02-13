@@ -57,11 +57,17 @@ jobs:
       - name: Generate Open API Specification Document
         run: |
           export PATH="$HOME/.dotnet/tools:$PATH"
-          dotnet tool restore
-          
+          dotnet tool restore || (echo "❌ Tool restore failed" && exit 1)
+
           # Verify DLL Exists
-          if [ ! -f "${{ env.API_IMPORT_DLL }}" ]; then
-            echo "❌ API DLL not found: ${{ env.API_IMPORT_DLL }}"
+          if [ ! -f "./publish/AspireDemoApi.dll" ]; then
+            echo "❌ API DLL not found: ./publish/AspireDemoApi.dll"
+            exit 1
+          fi
+
+          # Verify Swagger CLI Exists
+          if ! command -v dotnet-swagger &> /dev/null; then
+            echo "❌ Swagger CLI tool not found!"
             exit 1
           fi
 
