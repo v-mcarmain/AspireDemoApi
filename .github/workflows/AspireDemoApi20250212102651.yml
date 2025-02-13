@@ -76,7 +76,7 @@ jobs:
           dotnet tool list --global
           
           # Run Swagger Generation using explicit dotnet command
-          dotnet swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" ${{ env.API_IMPORT_VERSION }} --no-startup || (echo "❌ Swagger generation failed" && exit 1)
+          swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" ${{ env.API_IMPORT_VERSION }} --no-startup || (echo "❌ Swagger generation failed" && exit 1)
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v4
