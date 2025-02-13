@@ -57,7 +57,6 @@ jobs:
       - name: Generate Open API Specification Document
         run: |
           export PATH="$HOME/.dotnet/tools:$PATH"
-          dotnet tool restore || (echo "❌ Tool restore failed" && exit 1)
 
           # Verify DLL Exists
           if [ ! -f "./publish/AspireDemoApi.dll" ]; then
@@ -67,8 +66,8 @@ jobs:
 
           # Verify Swagger CLI Exists
           if ! command -v dotnet-swagger &> /dev/null; then
-            echo "❌ Swagger CLI tool not found!"
-            exit 1
+            echo "❌ Swagger CLI tool not found! Installing..."
+            dotnet tool install --global Swashbuckle.AspNetCore.Cli --version 6.7.0
           fi
 
           # Run Swagger Generation
