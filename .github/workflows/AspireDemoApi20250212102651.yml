@@ -47,36 +47,35 @@ jobs:
         run: dotnet publish ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 
       - name: Install Swashbuckle CLI .NET Global Tool
-        run: dotnet tool install --global Swashbuckle.AspNetCore.Cli --version 6.7.0
-
-      - name: Ensure .NET Tools are in PATH
-        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+        run: |
+          dotnet tool install --global Swashbuckle.AspNetCore.Cli --version 6.7.0
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
       - name: Verify Swashbuckle CLI Installation
         run: dotnet tool list --global
 
+      - name: Ensure .NET Tools are in PATH
+        run: echo "export PATH=\"$HOME/.dotnet/tools:$PATH\"" >> $HOME/.bashrc && source $HOME/.bashrc
+
       - name: Generate Open API Specification Document
         run: |
           export PATH="$HOME/.dotnet/tools:$PATH"
-
+          
           # Verify DLL Exists
-          if [ ! -f "./publish/AspireDemoApi.dll" ]; then
-            echo "❌ API DLL not found: ./publish/AspireDemoApi.dll"
+          if [ ! -f "${{ env.API_IMPORT_DLL }}" ]; then
+            echo "❌ API DLL not found: ${{ env.API_IMPORT_DLL }}"
             exit 1
           fi
 
           # Verify Swagger CLI Exists
-          if ! command -v dotnet-swagger &> /dev/null; then
+          if ! command -v swagger &> /dev/null; then
             echo "❌ Swagger CLI tool not found! Installing..."
             dotnet tool install --global Swashbuckle.AspNetCore.Cli --version 6.7.0
             export PATH="$HOME/.dotnet/tools:$PATH"
-            dotnet tool list --global
           fi
-
+          
           # Run Swagger Generation
-          $HOME/.dotnet/tools/dotnet-swagger tofile --output "./publish/swagger.json" \
-            "./publish/AspireDemoApi.dll" v1 --no-startup || \
-            (echo "❌ Swagger generation failed" && exit 1)
+          swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" ${{ env.API_IMPORT_VERSION }} --no-startup || (echo "❌ Swagger generation failed" && exit 1)
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v4
