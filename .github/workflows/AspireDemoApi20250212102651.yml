@@ -19,6 +19,7 @@ env:
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 8.0.x
   WORKING_DIRECTORY: AspireDemoApi.csproj
+  DOTNET_ROOT: /usr/share/dotnet
 
 jobs:
   build:
@@ -68,11 +69,13 @@ jobs:
           if ! command -v dotnet-swagger &> /dev/null; then
             echo "❌ Swagger CLI tool not found! Installing..."
             dotnet tool install --global Swashbuckle.AspNetCore.Cli --version 6.7.0
+            export PATH="$HOME/.dotnet/tools:$PATH"
+            dotnet tool list --global
           fi
 
           # Run Swagger Generation
-          dotnet swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" \
-            "${{ env.API_IMPORT_DLL }}" ${{ env.API_IMPORT_VERSION }} --no-startup || \
+          $HOME/.dotnet/tools/dotnet-swagger tofile --output "./publish/swagger.json" \
+            "./publish/AspireDemoApi.dll" v1 --no-startup || \
             (echo "❌ Swagger generation failed" && exit 1)
 
       - name: Publish Artifacts
