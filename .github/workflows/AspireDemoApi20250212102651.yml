@@ -60,8 +60,8 @@ jobs:
           export PATH="$HOME/.dotnet/tools:$PATH"
           
           # Verify DLL Exists
-          if [ ! -f "./publish/AspireDemoApi.dll" ]; then
-            echo "❌ API DLL not found: ./publish/AspireDemoApi.dll"
+          if [ ! -f "${{ env.API_IMPORT_DLL }}" ]; then
+            echo "❌ API DLL not found: ${{ env.API_IMPORT_DLL }}"
             exit 1
           fi
           
