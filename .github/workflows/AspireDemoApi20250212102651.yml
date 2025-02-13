@@ -45,22 +45,30 @@ jobs:
       - name: Publish application
         run: dotnet publish ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 
-      - name: Install Swashbuckle CLI .NET Local Tool
-        run: |
-          dotnet new tool-manifest
-          dotnet tool install Swashbuckle.AspNetCore.Cli --version 6.7.0
+      - name: Install Swashbuckle CLI .NET Global Tool
+        run: dotnet tool install --global Swashbuckle.AspNetCore.Cli --version 6.7.0
 
       - name: Ensure .NET Tools are in PATH
         run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
       - name: Verify Swashbuckle CLI Installation
-        run: dotnet tool list --local
+        run: dotnet tool list --global
 
       - name: Generate Open API Specification Document
         run: |
           export PATH="$HOME/.dotnet/tools:$PATH"
           dotnet tool restore
-          dotnet swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" ${{ env.API_IMPORT_VERSION }} --no-startup || (echo "Swagger generation failed" && exit 1)
+          
+          # Verify DLL Exists
+          if [ ! -f "${{ env.API_IMPORT_DLL }}" ]; then
+            echo "❌ API DLL not found: ${{ env.API_IMPORT_DLL }}"
+            exit 1
+          fi
+
+          # Run Swagger Generation
+          dotnet swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" \
+            "${{ env.API_IMPORT_DLL }}" ${{ env.API_IMPORT_VERSION }} --no-startup || \
+            (echo "❌ Swagger generation failed" && exit 1)
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v4
